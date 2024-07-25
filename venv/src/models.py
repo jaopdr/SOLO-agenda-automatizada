@@ -50,35 +50,38 @@ class TelaAgenda:
             ("Tipo do Evento", 0.05, 0.12),
             ("Nome", 0.05, 0.43),
             ("Data (dd/mm/aaaa)", 0.05, 0.75),
-            ("Local", 0.35, 0.12),
-            ("Telefone (xx) xxxxxxxxx", 0.35, 0.43),
-            ("Pacote ou Valor", 0.35, 0.75)
+            ("Local", 0.31, 0.12),
+            ("Telefone (xx) xxxxxxxxx", 0.31, 0.43),
+            ("Pacote", 0.31, 0.75),
+            ("Valor", 0.57, 0.12)
         ]
 
         self.entries = []
         for texto, x, y in labels:
-            etiqueta = Label(self.frame_formularios, text=texto, bg=self.bege_escuro, fg='black', font=("Arial", 12))
-            etiqueta.place(relx=x, rely=y - 0.05, anchor=W)
+            label = Label(self.frame_formularios, text=texto, bg=self.bege_escuro, fg='black', font=("Arial", 12))
+            label.place(relx=x, rely=y - 0.05, anchor=W)
             
             entrada = Entry(self.frame_formularios, font=("Arial", 14))
             entrada.place(relx=x, rely=y, width=200, height=30)
             self.entries.append(entrada)
             
-            # Bind para formatação de data e telefone
+            # Bind para formatação de data, telefone e valor
             if texto.startswith("Data"):
                 entrada.bind("<KeyRelease>", self.formatar_data)
             elif texto.startswith("Telefone"):
                 entrada.bind("<KeyRelease>", self.formatar_telefone)
+            elif texto.startswith("Valor"):
+                entrada.bind("<KeyRelease>", self.formatar_valor)
 
         # Botões de ação
         self.botao_adicionar = Button(self.frame_formularios, text='Adicionar', font=("Arial", 14), command=self.adicionar_evento)
-        self.botao_adicionar.place(relx=0.73, rely=0.12, width=100, height=30)
+        self.botao_adicionar.place(relx=0.85, rely=0.12, width=100, height=30)
 
         self.botao_atualizar = Button(self.frame_formularios, text='Atualizar', font=("Arial", 14), command=self.atualizar_evento)
-        self.botao_atualizar.place(relx=0.73, rely=0.43, width=100, height=30)
+        self.botao_atualizar.place(relx=0.85, rely=0.43, width=100, height=30)
 
         self.botao_excluir = Button(self.frame_formularios, text='Excluir', font=("Arial", 14), command=self.excluir_evento)
-        self.botao_excluir.place(relx=0.73, rely=0.75, width=100, height=30)
+        self.botao_excluir.place(relx=0.85, rely=0.75, width=100, height=30)
 
         self.botao_limpar = Button(self.frame_formularios, text='Limpar', font=("Arial", 14), command=self.limpar_inputs)
         self.botao_limpar.place(relx=0.61, rely=0.75, width=80, height=30)
@@ -107,7 +110,7 @@ class TelaAgenda:
         scrollbar_x.pack(side=BOTTOM, fill=X)
 
         # Cria a Treeview para a tabela de eventos
-        self.tree = ttk.Treeview(self.frame_tabela, columns=("id", "tipo", "nome", "data", "local", "telefone", "pacote"), show='headings', xscrollcommand=scrollbar_x.set)
+        self.tree = ttk.Treeview(self.frame_tabela, columns=("id", "tipo", "nome", "data", "local", "telefone", "pacote", "valor"), show='headings', xscrollcommand=scrollbar_x.set)
         self.tree.heading("id", text="ID")
         self.tree.heading("tipo", text="Tipo")
         self.tree.heading("nome", text="Nome")
@@ -115,6 +118,7 @@ class TelaAgenda:
         self.tree.heading("local", text="Local")
         self.tree.heading("telefone", text="Telefone")
         self.tree.heading("pacote", text="Pacote")
+        self.tree.heading("valor", text="Valor")
         self.tree.pack(expand=True, fill='both')
 
         # Configura a barra de rolagem
@@ -128,6 +132,7 @@ class TelaAgenda:
         self.tree.column("local", width=150)
         self.tree.column("telefone", width=120)
         self.tree.column("pacote", width=100)
+        self.tree.column("valor", width=100)
 
         self.carregar_eventos()
 
@@ -165,11 +170,12 @@ class TelaAgenda:
         local = self.entries[3].get()
         telefone = self.entries[4].get()
         pacote = self.entries[5].get()
+        valor = self.entries[6].get()
 
-        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote):
+        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote, valor):
             return
 
-        add_evento(tipo, nome, data, local, telefone, pacote)
+        add_evento(tipo, nome, data, local, telefone, pacote, valor)
         self.carregar_eventos()
         self.limpar_inputs()
 
@@ -186,14 +192,15 @@ class TelaAgenda:
         local = self.entries[3].get()
         telefone = self.entries[4].get()
         pacote = self.entries[5].get()
+        valor = self.entries[6].get()
 
-        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote):
+        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote, valor):
             return
 
         item = self.tree.item(item_selecionado)
         evento_id = item["values"][0]  # Obtém o ID do item selecionado
 
-        update_evento(evento_id, tipo, nome, data, local, telefone, pacote)
+        update_evento(evento_id, tipo, nome, data, local, telefone, pacote, valor)
         self.carregar_eventos()
         self.limpar_inputs()
 
@@ -217,9 +224,8 @@ class TelaAgenda:
         for entrada in self.entries:
             entrada.delete(0, END)
 
-    # Valida os dados de entrada
-    def validar_inputs(self, tipo, nome, data, local, telefone, pacote):
-        if not (tipo and nome and data and local and telefone and pacote):
+    def validar_inputs(self, tipo, nome, data, local, telefone, pacote, valor):
+        if not (tipo and nome and data and local and telefone and pacote and valor):
             messagebox.showwarning("Aviso", "Todos os campos são obrigatórios!")
             return False
 
@@ -232,6 +238,12 @@ class TelaAgenda:
         if not re.match(r'\(\d{2}\) \d{8,9}', telefone):
             messagebox.showwarning("Aviso", "O telefone deve estar no formato (xx) xxxxxxxxx!")
             return False
+
+        # Valida o formato do valor
+        if not re.match(r'^\d+$', valor):  # Verifica se o valor contém apenas números
+            messagebox.showwarning("Aviso", "O valor deve ser um número válido!")
+            return False
+
         return True
 
     # Formata a data enquanto o usuário digita
@@ -258,6 +270,13 @@ class TelaAgenda:
         
         entrada_telefone.delete(0, END)
         entrada_telefone.insert(0, texto_telefone)
+
+    def formatar_valor(self, event):
+        entrada_valor = self.entries[6]
+        texto_valor = entrada_valor.get()
+        texto_valor = re.sub(r'[^0-9]', '', texto_valor)  # Remove caracteres não numéricos
+        entrada_valor.delete(0, END)
+        entrada_valor.insert(0, texto_valor)
 
     # Atualiza os campos de entrada com base na seleção na tabela
     def on_click(self, event):

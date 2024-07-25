@@ -12,7 +12,8 @@ def setup_database():
         data TEXT NOT NULL,
         local TEXT NOT NULL,
         telefone TEXT NOT NULL,
-        pacote TEXT NOT NULL
+        pacote TEXT NOT NULL,
+        valor REAL NOT NULL
     )
     ''')
 
@@ -35,17 +36,17 @@ def get_eventos_by_date(date):
     conn.close()
     return eventos
 
-def add_evento(tipo, nome, data, local, telefone, pacote):
+def add_evento(tipo, nome, data, local, telefone, pacote, valor):
     conn = sqlite3.connect('agenda.db')
     cursor = conn.cursor()
-    cursor.execute("INSERT INTO eventos (tipo, nome, data, local, telefone, pacote) VALUES (?, ?, ?, ?, ?, ?)", (tipo, nome, data, local, telefone, pacote))
+    cursor.execute("INSERT INTO eventos (tipo, nome, data, local, telefone, pacote, valor) VALUES (?, ?, ?, ?, ?, ?, ?)", (tipo, nome, data, local, telefone, pacote, float(valor)))
     conn.commit()
     conn.close()
 
-def update_evento(evento_id, tipo, nome, data, local, telefone, pacote):
+def update_evento(evento_id, tipo, nome, data, local, telefone, pacote, valor):
     conn = sqlite3.connect('agenda.db')
     cursor = conn.cursor()
-    cursor.execute("UPDATE eventos SET tipo=?, nome=?, data=?, local=?, telefone=?, pacote=? WHERE id=?", (tipo, nome, data, local, telefone, pacote, evento_id))
+    cursor.execute("UPDATE eventos SET tipo=?, nome=?, data=?, local=?, telefone=?, pacote=?, valor=? WHERE id=?", (tipo, nome, data, local, telefone, pacote, float(valor), evento_id))
     conn.commit()
     conn.close()
 
