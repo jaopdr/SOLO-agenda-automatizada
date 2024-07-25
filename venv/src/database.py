@@ -16,10 +16,21 @@ def setup_database():
     )
     ''')
 
+    conn.commit()
+    conn.close()
+
 def get_eventos():
     conn = sqlite3.connect('agenda.db')
     cursor = conn.cursor()
     cursor.execute("SELECT * FROM eventos")
+    eventos = cursor.fetchall()
+    conn.close()
+    return eventos
+
+def get_eventos_by_date(date):
+    conn = sqlite3.connect('agenda.db')
+    cursor = conn.cursor()
+    cursor.execute("SELECT * FROM eventos WHERE data=?", (date,))
     eventos = cursor.fetchall()
     conn.close()
     return eventos
