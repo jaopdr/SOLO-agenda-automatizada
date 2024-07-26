@@ -54,23 +54,23 @@ python -m venv venv
 #### Ative o ambiente virtual:
 
 No Windows:
-
 ```bash
 venv\Scripts\activate
 ```
 
 No macOS e Linux:
-
 ```bash
 source venv/bin/activate
 Como Instalar as Dependências
-Com o ambiente virtual ativado, instale as dependências necessárias:
 ```
+
+###Com o ambiente virtual ativado, instale as dependências necessárias:
 
 ```bash
 pip install -r requirements.txt
-Observação: O arquivo requirements.txt deve conter as bibliotecas necessárias, como tkcalendar e qualquer outra que o projeto utilize.
 ```
+
+Observação: O arquivo requirements.txt deve conter as bibliotecas necessárias, como tkcalendar e qualquer outra que o projeto utilize.
 
 ## Como Usar
 
