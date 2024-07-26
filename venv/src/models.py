@@ -3,7 +3,7 @@ from tkinter import *
 from tkinter import ttk
 from tkinter import messagebox
 from tkcalendar import Calendar
-from src.database import setup_database, get_eventos, get_eventos_by_date, add_evento, update_evento, delete_evento
+from src.database import setup_database, get_eventos, get_eventos_by_date, get_eventos_por_nome,add_evento, update_evento, delete_evento
 
 class TelaAgenda:
     # Cores usadas na interface
@@ -21,12 +21,13 @@ class TelaAgenda:
         self.frame_calendario()
         self.frame_tabela()
         self.root.bind("<Button-1>", self.on_click)  # Bind para atualizar os campos de entrada com os dados do item selecionado
+
         self.root.mainloop()
 
     # Configura a janela principal
     def configurar(self):
         self.root.title('Agenda Automatizada')
-        largura, altura, y = 800, 600, 170
+        largura, altura, y = 900, 700, 130
         largura_tela = self.root.winfo_screenwidth()
         x = (largura_tela // 2) - (largura // 2)
         self.root.geometry(f'{largura}x{altura}+{x}+{y}')
@@ -49,11 +50,15 @@ class TelaAgenda:
         labels = [
             ("Tipo do Evento", 0.05, 0.12),
             ("Nome", 0.05, 0.43),
-            ("Data (dd/mm/aaaa)", 0.05, 0.75),
-            ("Local", 0.31, 0.12),
-            ("Telefone (xx) xxxxxxxxx", 0.31, 0.43),
-            ("Pacote", 0.31, 0.75),
-            ("Valor", 0.57, 0.12)
+            ("Cerimonialista", 0.05, 0.75),
+            ("Data", 0.22, 0.12),
+            ("Dia do Noivo", 0.22, 0.43),
+            ("Dia da Noiva", 0.22, 0.75),
+            ("Cerimônia", 0.39, 0.12),
+            ("Recepção", 0.39, 0.43),
+            ("Telefone", 0.39, 0.75),
+            ("Pacote", 0.56, 0.12),
+            ("Valor", 0.56, 0.43)
         ]
 
         self.entries = []
@@ -62,7 +67,7 @@ class TelaAgenda:
             label.place(relx=x, rely=y - 0.05, anchor=W)
             
             entrada = Entry(self.frame_formularios, font=("Arial", 14))
-            entrada.place(relx=x, rely=y, width=200, height=30)
+            entrada.place(relx=x, rely=y, relwidth=0.15, height=30)
             self.entries.append(entrada)
             
             # Bind para formatação de data, telefone e valor
@@ -75,16 +80,16 @@ class TelaAgenda:
 
         # Botões de ação
         self.botao_adicionar = Button(self.frame_formularios, text='Adicionar', font=("Arial", 14), command=self.adicionar_evento)
-        self.botao_adicionar.place(relx=0.85, rely=0.12, width=100, height=30)
+        self.botao_adicionar.place(relx=0.8, rely=0.12, width=100, height=30)
 
         self.botao_atualizar = Button(self.frame_formularios, text='Atualizar', font=("Arial", 14), command=self.atualizar_evento)
-        self.botao_atualizar.place(relx=0.85, rely=0.43, width=100, height=30)
+        self.botao_atualizar.place(relx=0.8, rely=0.43, width=100, height=30)
 
         self.botao_excluir = Button(self.frame_formularios, text='Excluir', font=("Arial", 14), command=self.excluir_evento)
-        self.botao_excluir.place(relx=0.85, rely=0.75, width=100, height=30)
+        self.botao_excluir.place(relx=0.8, rely=0.75, width=100, height=30)
 
         self.botao_limpar = Button(self.frame_formularios, text='Limpar', font=("Arial", 14), command=self.limpar_inputs)
-        self.botao_limpar.place(relx=0.61, rely=0.75, width=80, height=30)
+        self.botao_limpar.place(relx=0.56, rely=0.75, relwidth=0.15, height=30)
 
     # Cria o frame do calendário e o botão para mostrar todos os eventos
     def frame_calendario(self):
@@ -97,8 +102,17 @@ class TelaAgenda:
         self.calendario.bind("<<CalendarSelected>>", self.on_date_select)
 
         # Botão para mostrar todos os eventos
-        self.botao_reset_data = Button(self.frame_calendario, text='Mostrar Todos os Eventos', font=("Arial", 14), command=self.resetar_dados)
-        self.botao_reset_data.place(width=300, height=30, rely=0.9, relx=0.5, anchor=CENTER)
+        self.botao_reset_data = Button(self.frame_calendario, text='Mostrar Todos', font=("Arial", 13), command=self.resetar_dados)
+        self.botao_reset_data.place(relwidth=0.35, height=30, rely=0.9, relx=0)
+
+        label = Label(self.frame_calendario, text='Procurar por Nome', bg=self.bege_claro, fg='black', font=("Arial", 12))
+        label.place(relx=0.4, rely=0.9 - 0.035, anchor=W)
+
+        self.insert_procura = Entry(self.frame_calendario, font=("Arial", 14))
+        self.insert_procura.place(relwidth=0.4, height=30, rely=0.9, relx=0.4)
+
+        self.botao_procura = Button(self.frame_calendario, text='Procurar', font=("Arial", 13), command=self.procurar_evento_por_nome)
+        self.botao_procura.place(relwidth=0.2, height=30, rely=0.9, relx=0.8)
 
     # Cria o frame da tabela de eventos com a barra de rolagem
     def frame_tabela(self):
@@ -110,12 +124,16 @@ class TelaAgenda:
         scrollbar_x.pack(side=BOTTOM, fill=X)
 
         # Cria a Treeview para a tabela de eventos
-        self.tree = ttk.Treeview(self.frame_tabela, columns=("id", "tipo", "nome", "data", "local", "telefone", "pacote", "valor"), show='headings', xscrollcommand=scrollbar_x.set)
+        self.tree = ttk.Treeview(self.frame_tabela, columns=("id", "tipo", "nome", "cerimonialista", "data", "dia do noivo", "dia da noiva", "cerimonia", "recepção", "telefone", "pacote", "valor"), show='headings', xscrollcommand=scrollbar_x.set)
         self.tree.heading("id", text="ID")
         self.tree.heading("tipo", text="Tipo")
         self.tree.heading("nome", text="Nome")
+        self.tree.heading("cerimonialista", text="Cerimonialista")
         self.tree.heading("data", text="Data")
-        self.tree.heading("local", text="Local")
+        self.tree.heading("dia do noivo", text="Dia do Noivo")
+        self.tree.heading("dia da noiva", text="Dia da Noiva")
+        self.tree.heading("cerimonia", text="Cerimônia")
+        self.tree.heading("recepção", text="Recepção")
         self.tree.heading("telefone", text="Telefone")
         self.tree.heading("pacote", text="Pacote")
         self.tree.heading("valor", text="Valor")
@@ -125,11 +143,15 @@ class TelaAgenda:
         scrollbar_x.config(command=self.tree.xview)
 
         # Ajusta a largura das colunas
-        self.tree.column("id", width=50)
+        self.tree.column("id", width=0)
         self.tree.column("tipo", width=100)
         self.tree.column("nome", width=150)
+        self.tree.column("cerimonialista", width=150)
         self.tree.column("data", width=100)
-        self.tree.column("local", width=150)
+        self.tree.column("dia do noivo", width=100)
+        self.tree.column("dia da noiva", width=100)
+        self.tree.column("cerimonia", width=150)
+        self.tree.column("recepção", width=150)
         self.tree.column("telefone", width=120)
         self.tree.column("pacote", width=100)
         self.tree.column("valor", width=100)
@@ -162,45 +184,61 @@ class TelaAgenda:
             self.entries[i].delete(0, END)
             self.entries[i].insert(0, valor)
 
+    def procurar_evento_por_nome(self):
+        nome = self.insert_procura.get()
+        if not nome:
+            messagebox.showwarning("Aviso", "Digite um nome para procurar.")
+            return
+
+        eventos = get_eventos_por_nome(nome)  # Correção aqui
+        self.tree.delete(*self.tree.get_children())  # Limpa as linhas existentes
+        for evento in eventos:
+            self.tree.insert("", "end", values=evento)
+
     # Adiciona um novo evento ao banco de dados
     def adicionar_evento(self):
         tipo = self.entries[0].get()
         nome = self.entries[1].get()
-        data = self.entries[2].get()
-        local = self.entries[3].get()
-        telefone = self.entries[4].get()
-        pacote = self.entries[5].get()
-        valor = self.entries[6].get()
+        cerimonialista = self.entries[2].get()
+        data = self.entries[3].get()
+        dia_noivo = self.entries[4].get()
+        dia_noiva = self.entries[5].get()
+        cerimonia = self.entries[6].get()
+        recepcao = self.entries[7].get()
+        telefone = self.entries[8].get()
+        pacote = self.entries[9].get()
+        valor = self.entries[10].get()
 
-        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote, valor):
+        if not self.validar_inputs(tipo, nome, cerimonialista, data, dia_noivo, dia_noiva, cerimonia, recepcao, telefone, pacote, valor):
             return
 
-        add_evento(tipo, nome, data, local, telefone, pacote, valor)
+        add_evento(tipo, nome, cerimonialista, data, dia_noivo, dia_noiva, cerimonia, recepcao, telefone, pacote, valor)
         self.carregar_eventos()
         self.limpar_inputs()
 
-    # Atualiza um evento existente no banco de dados
     def atualizar_evento(self):
         item_selecionado = self.tree.selection()
         if not item_selecionado:
-            messagebox.showwarning("Aviso", "Nenhum evento selecionado!")
+            messagebox.showwarning("Aviso", "Selecione um evento para atualizar.")
             return
 
+        id_evento = self.tree.item(item_selecionado, 'values')[0]
         tipo = self.entries[0].get()
         nome = self.entries[1].get()
-        data = self.entries[2].get()
-        local = self.entries[3].get()
-        telefone = self.entries[4].get()
-        pacote = self.entries[5].get()
-        valor = self.entries[6].get()
+        cerimonialista = self.entries[2].get()
+        data = self.entries[3].get()
+        dia_noivo = self.entries[4].get()
+        dia_noiva = self.entries[5].get()
+        cerimonia = self.entries[6].get()
+        recepcao = self.entries[7].get()
+        telefone = self.entries[8].get()
+        pacote = self.entries[9].get()
+        valor = self.entries[10].get()
 
-        if not self.validar_inputs(tipo, nome, data, local, telefone, pacote, valor):
+        if not self.validar_inputs(tipo, nome, cerimonialista, data, dia_noivo, dia_noiva, cerimonia, recepcao, telefone, pacote, valor):
             return
 
-        item = self.tree.item(item_selecionado)
-        evento_id = item["values"][0]  # Obtém o ID do item selecionado
-
-        update_evento(evento_id, tipo, nome, data, local, telefone, pacote, valor)
+        update_evento(id_evento, tipo, nome, cerimonialista, data, dia_noivo, dia_noiva, cerimonia, recepcao, telefone, pacote, valor)
         self.carregar_eventos()
         self.limpar_inputs()
 
@@ -223,9 +261,10 @@ class TelaAgenda:
     def limpar_inputs(self):
         for entrada in self.entries:
             entrada.delete(0, END)
+        self.insert_procura.delete(0, END)
 
-    def validar_inputs(self, tipo, nome, data, local, telefone, pacote, valor):
-        if not (tipo and nome and data and local and telefone and pacote and valor):
+    def validar_inputs(self, tipo, nome, cerimonialista, data, dia_noivo, dia_noiva, cerimonia, recepcao, telefone, pacote, valor):
+        if not (tipo and nome and cerimonialista and data and dia_noivo and dia_noiva and cerimonia and recepcao and telefone and pacote and valor):
             messagebox.showwarning("Aviso", "Todos os campos são obrigatórios!")
             return False
 
@@ -239,16 +278,16 @@ class TelaAgenda:
             messagebox.showwarning("Aviso", "O telefone deve estar no formato (xx) xxxxxxxxx!")
             return False
 
-        # Valida o formato do valor
-        if not re.match(r'^\d+$', valor):  # Verifica se o valor contém apenas números
-            messagebox.showwarning("Aviso", "O valor deve ser um número válido!")
+        # Valida o formato do valor, permitindo o símbolo 'R$'
+        if not re.match(r'R\$ \d+([.,]\d+)?$', valor):
+            messagebox.showwarning("Aviso", "O valor deve ser um número válido com o formato R$ xxxxx,xx!")
             return False
 
         return True
 
     # Formata a data enquanto o usuário digita
     def formatar_data(self, event):
-        entrada_data = self.entries[2]
+        entrada_data = self.entries[3]
         texto_data = entrada_data.get()
         texto_data = re.sub(r'\D', '', texto_data)
         if len(texto_data) > 2 and texto_data[2] != '/':
@@ -260,7 +299,7 @@ class TelaAgenda:
 
     # Formata o telefone enquanto o usuário digita
     def formatar_telefone(self, event):
-        entrada_telefone = self.entries[4]
+        entrada_telefone = self.entries[8]
         texto_telefone = entrada_telefone.get()
         texto_telefone = re.sub(r'\D', '', texto_telefone)  # Remove caracteres não numéricos
         
@@ -272,11 +311,14 @@ class TelaAgenda:
         entrada_telefone.insert(0, texto_telefone)
 
     def formatar_valor(self, event):
-        entrada_valor = self.entries[6]
-        texto_valor = entrada_valor.get()
-        texto_valor = re.sub(r'[^0-9]', '', texto_valor)  # Remove caracteres não numéricos
-        entrada_valor.delete(0, END)
-        entrada_valor.insert(0, texto_valor)
+        entrada = event.widget
+        texto = entrada.get()
+        # Remove caracteres não numéricos, mas mantém o símbolo 'R$'
+        texto_formatado = re.sub(r'[^\d]', '', texto)
+        if texto_formatado:
+            texto_formatado = f'R$ {int(texto_formatado):,}'.replace(',', '.')
+        entrada.delete(0, END)
+        entrada.insert(0, texto_formatado)
 
     # Atualiza os campos de entrada com base na seleção na tabela
     def on_click(self, event):
